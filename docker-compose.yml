@@ -1,0 +1,119 @@
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: example
+      POSTGRES_DB: tacoexpress
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      SERVICE_NAME: api-gateway
+      PORT: 3000
+      AUTH_URL: http://auth-service:3000
+      CATALOG_URL: http://catalog-service:3000
+      ORDERS_URL: http://orders-service:3000
+      DELIVERY_URL: http://delivery-service:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - catalog-service
+      - orders-service
+      - delivery-service
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      SERVICE_NAME: auth-service
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: example
+      PGPASSWORD: example
+      PGDATABASE: tacoexpress
+      JWT_SECRET: supersecretjwt
+    depends_on:
+      - db
+
+  catalog-service:
+    build: ./catalog-service
+    environment:
+      SERVICE_NAME: catalog-service
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: example
+      PGPASSWORD: example
+      PGDATABASE: tacoexpress
+    depends_on:
+      - db
+
+  pricing-service:
+    build: ./pricing-service
+    environment:
+      SERVICE_NAME: pricing-service
+      PORT: 3000
+
+  orders-service:
+    build: ./orders-service
+    environment:
+      SERVICE_NAME: orders-service
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: example
+      PGPASSWORD: example
+      PGDATABASE: tacoexpress
+      CATALOG_URL: http://catalog-service:3000
+      PRICING_URL: http://pricing-service:3000
+    depends_on:
+      - db
+      - catalog-service
+      - pricing-service
+
+  delivery-service:
+    build: ./delivery-service
+    environment:
+      SERVICE_NAME: delivery-service
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: example
+      PGPASSWORD: example
+      PGDATABASE: tacoexpress
+    depends_on:
+      - db
+
+  notifications-service:
+    build: ./notifications-service
+    environment:
+      SERVICE_NAME: notifications-service
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: example
+      PGPASSWORD: example
+      PGDATABASE: tacoexpress
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    environment:
+      PORT: 8000
+    ports:
+      - "80:8000"
+    depends_on:
+      - api-gateway
+
+volumes:
+  dbdata:
