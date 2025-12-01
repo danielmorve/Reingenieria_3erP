@@ -1,5 +1,6 @@
-const API_BASE = "http://18.217.113.123:3000/api";
-
+const origin = window.location.origin;
+const baseHost = origin.replace(/:\d+$/, '');
+const API_BASE = `${baseHost}:3000/api`;
 const state = {
   authToken: null,
   user: null,
